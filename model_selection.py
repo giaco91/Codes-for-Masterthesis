@@ -153,7 +153,7 @@ def lineplot_models(models_info, covar_type='diag'):
 	ax[0,0].set_xlabel('hidden states')
 	#ax[0,0].set_ylabel('log-likelihood')
 	ax[1,0].plot(n_h,AIC,'b-')
-	ax[1,0].set_title('Validation AIC')
+	ax[1,0].set_title('AIC')
 	ax[1,0].set_xlabel('hidden states')
 	#ax[1,0].set_ylabel('AIC')	
 	ax[0,1].plot(n_h,AICc,'b-')
