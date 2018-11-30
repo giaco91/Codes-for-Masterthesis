@@ -32,8 +32,7 @@ netE=load_netE(gan_path+'/netE_epoch_44.pth')
 # print(zhat_zeros.dtype)
 
 #---decode the latent sequence back to a power spectrogram
-zhat=np.load('/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/data_masterthesis/b7r16/b7r16_train/day30_b7r16/z_sequences/89082.npy')
-print(type(zhat))
+zhat=np.load('/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/data_masterthesis/b7r16/b7r16_train/day0_b7r16/z_sequences/54783.npy')
 reconstructed_samples, reconstructed_audio = decode(zhat=zhat, netG=netG)
 print('reconstructed power spectrogram shape: '+str(reconstructed_samples.shape))
 plt.imshow(reconstructed_samples, origin='lower')

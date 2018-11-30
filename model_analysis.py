@@ -18,7 +18,7 @@ from hmmlearn import hmm
 #sample_mc
 #plot_state_imporance
 
-def get_model_parameters(model_path,type='diag'):
+def get_model_parameters(model_path):
   print('load model....')
   model=joblib.load(model_path)
   startprob=model.startprob_
@@ -27,11 +27,15 @@ def get_model_parameters(model_path,type='diag'):
   covars=model.covars_
   return startprob,transmat,means,covars
 
-def plot_covars(means,covars,n_h,n_row=3,n_col=3,data=None):
+def plot_covars(means,covars,n_h,n_row=3,n_col=3,data=None,save_path=None):
   if n_row<2 or n_col<2:
     raise ValueError('n_row and n_col must be at least 2')
-  x=np.random.randint(16, size=n_row)
-  y=np.random.randint(16, size=n_col)
+  #---for random axis----
+  # x=np.random.randint(16, size=n_row)
+  # y=np.random.randint(16, size=n_col)
+  #---for fixed axis---
+  x=np.linspace(0,n_row-1,n_row).astype(int)
+  y=np.linspace(n_row,n_row+n_col-1,n_col).astype(int)
   fig, ax = plt.subplots(n_row, n_col)
   fig.subplots_adjust(hspace=0.7, wspace=0.7)
   for i in range(0,n_row):
@@ -47,6 +51,10 @@ def plot_covars(means,covars,n_h,n_row=3,n_col=3,data=None):
         ax[i, j].set_ylim(-4.5, 4.5)
       if data is not None:
         ax[i, j].plot(data[:,x[i]],data[:,y[j]],'b.',markersize=0.7,color='black')
+  if save_path is not None:
+    print('store plot at: '+save_path)
+    plt.savefig(save_path+'.eps', format='eps', dpi=1000)
+    plt.savefig(save_path+'.png', format='png', dpi=1000)
   plt.show()
 
 def read_data(directory):
@@ -73,7 +81,7 @@ def read_data_merge(directory,merge_code,merge):
   for i in range(0,int(to_day+1-from_day)):
     current_day=i+from_day
     print('get data from day: '+str(current_day))
-    X_i,L_i=read_data(directory+'/day'+str(current_day)+'_b7r16/z_sequences_cut')
+    X_i,L_i=read_data(directory+'/day'+str(current_day)+'_b7r16/z_sequences')
     X=X+X_i
     L=L+L_i
   return X,L
@@ -173,53 +181,40 @@ def sample_from_params(startprob,transmat,means,covars,N,punish_large_variance=F
 
 
 merge=int(6)
-n_h=100
 merge_code=np.load('/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/merge_code_6000.npy')
 path_to_models='/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/merge_6000'
-model_path=get_modelpath(path_to_models,merge,n_h)
 data_val_dir='/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/data_masterthesis/b7r16/b7r16_val'
-#load the GAN
-gan_path='/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/nz16_16col'
-netG=load_netG(gan_path+'/netG_epoch_44.pth')
-netE=load_netE(gan_path+'/netE_epoch_44.pth')
+save_path='/Users/Giaco/Dropbox/SandroGiacomuzzi/Master_Thesis/merge_6000/m'+str(merge)+'_b7r16/parameter_graphics'
+val_data,L=read_data_merge(data_val_dir,merge_code,merge)
+val_data=np.asarray(val_data)
+np.random.shuffle(val_data)
+
+n_h=50
+model_path=get_modelpath(path_to_models,merge,n_h=n_h)
 startprob,transmat,means,covars=get_model_parameters(model_path)
-# val_data,L=read_data_merge(data_val_dir,merge_code,merge)
-# val_data=np.asarray(val_data)
-# np.random.shuffle(val_data)
+plot_covars(means,covars,n_h=n_h,n_row=2,n_col=2,data=val_data[0:250,:],save_path=save_path+'/m'+str(merge)+'_'+str(n_h)+'h_covars')
 
-#plot_covars(means,covars,n_h,n_row=3,n_col=3,data=val_data[0:200,:])
+
 #plot_state_activity(path_to_models,[0,1,2,3,6],130)
-N=50
-T=1
-startprob=truncate_p(startprob,T)
-transmat=get_truncated_transmat(transmat,T)
-z_sample=sample_from_params(startprob,transmat,means,covars,N)
+# gan_path='/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/nz16_16col'
+# netG=load_netG(gan_path+'/netG_epoch_44.pth')
+# netE=load_netE(gan_path+'/netE_epoch_44.pth')
+# N=50
+# T=1
+# startprob=truncate_p(startprob,T)
+# transmat=get_truncated_transmat(transmat,T)
+# z_sample=sample_from_params(startprob,transmat,means,covars,N)
 
-#-----workaround
-zhat=np.load('/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/data_masterthesis/b7r16/b7r16_train/day08_b7r16/z_sequences/84052.npy')
-zhat=np.resize(zhat,(N,16))
-zhat[:,:]=z_sample
-#-----
-reconstructed_samples, reconstructed_audio = decode(zhat=zhat, netG=netG)
-plt.imshow(reconstructed_samples, origin='lower')
-plt.show()
-
-
-
-
-
-
-
-
-# print('sample from model...')
-# X_sample, Z_sample = model.sample(30)
-# X_sample=np.float32(X_sample)
-# print('shape of latent sequence before decoding: '+str(X_sample.shape))
-# reconstructed_samples, reconstructed_audio = decode(zhat=X_sample, netG=netG)
+# #-----workaround
+# zhat=np.load('/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/data_masterthesis/b7r16/b7r16_train/day08_b7r16/z_sequences/84052.npy')
+# zhat=np.resize(zhat,(N,16))
+# zhat[:,:]=z_sample
+# #-----
+# reconstructed_samples, reconstructed_audio = decode(zhat=zhat, netG=netG)
 # plt.imshow(reconstructed_samples, origin='lower')
 # plt.show()
 
-#joblib.dump(model, "/Users/Giaco/Documents/Elektrotechnik-Master/Master Thesis/test_model.pkl") #store model
+
 
 
 
